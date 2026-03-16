@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.agriculture.mapper.BusPlantingResultMapper">
+
+    <resultMap type="BusPlantingResult" id="BusPlantingResultResult">
+        <result property="resultId" column="result_id" />
+        <result property="taskId" column="task_id" />
+        <result property="landId" column="land_id" />
+        <result property="containerId" column="container_id" />
+        <result property="cropId" column="crop_id" />
+        <result property="allocatedAreaSqm" column="allocated_area_sqm" />
+        <result property="displayAreaVal" column="display_area_val" />
+        <result property="plantCount" column="plant_count" />
+        <result property="profitAmount" column="profit_amount" />
+        <result property="experienceScore" column="experience_score" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <sql id="selectBusPlantingResultVo">
+        select result_id, task_id, land_id, container_id, crop_id, allocated_area_sqm, display_area_val, plant_count, profit_amount, experience_score, create_time
+        from bus_planting_result
+    </sql>
+
+    <select id="selectBusPlantingResultList" parameterType="BusPlantingResult" resultMap="BusPlantingResultResult">
+        <include refid="selectBusPlantingResultVo"/>
+        <where>
+            <if test="taskId != null">and task_id = #{taskId}</if>
+        </where>
+    </select>
+
+    <select id="selectBusPlantingResultByResultId" parameterType="Long" resultMap="BusPlantingResultResult">
+        <include refid="selectBusPlantingResultVo"/>
+        where result_id = #{resultId}
+    </select>
+
+    <insert id="insertBusPlantingResult" parameterType="BusPlantingResult" useGeneratedKeys="true" keyProperty="resultId">
+        insert into bus_planting_result
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="taskId != null">task_id,</if>
+            <if test="landId != null">land_id,</if>
+            <if test="containerId != null">container_id,</if>
+            <if test="cropId != null">crop_id,</if>
+            <if test="allocatedAreaSqm != null">allocated_area_sqm,</if>
+            <if test="displayAreaVal != null">display_area_val,</if>
+            <if test="plantCount != null">plant_count,</if>
+            <if test="profitAmount != null">profit_amount,</if>
+            <if test="experienceScore != null">experience_score,</if>
+            <if test="createTime != null">create_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="taskId != null">#{taskId},</if>
+            <if test="landId != null">#{landId},</if>
+            <if test="containerId != null">#{containerId},</if>
+            <if test="cropId != null">#{cropId},</if>
+            <if test="allocatedAreaSqm != null">#{allocatedAreaSqm},</if>
+            <if test="displayAreaVal != null">#{displayAreaVal},</if>
+            <if test="plantCount != null">#{plantCount},</if>
+            <if test="profitAmount != null">#{profitAmount},</if>
+            <if test="experienceScore != null">#{experienceScore},</if>
+            <if test="createTime != null">#{createTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateBusPlantingResult" parameterType="BusPlantingResult">
+        update bus_planting_result
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="taskId != null">task_id = #{taskId},</if>
+            <if test="landId != null">land_id = #{landId},</if>
+            <if test="containerId != null">container_id = #{containerId},</if>
+            <if test="cropId != null">crop_id = #{cropId},</if>
+            <if test="allocatedAreaSqm != null">allocated_area_sqm = #{allocatedAreaSqm},</if>
+            <if test="displayAreaVal != null">display_area_val = #{displayAreaVal},</if>
+            <if test="plantCount != null">plant_count = #{plantCount},</if>
+            <if test="profitAmount != null">profit_amount = #{profitAmount},</if>
+            <if test="experienceScore != null">experience_score = #{experienceScore},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+        </trim>
+        where result_id = #{resultId}
+    </update>
+
+    <delete id="deleteBusPlantingResultByTaskId" parameterType="Long">
+        delete from bus_planting_result where task_id = #{taskId}
+    </delete>
+
+    <delete id="deleteBusPlantingResultByResultId" parameterType="Long">
+        delete from bus_planting_result where result_id = #{resultId}
+    </delete>
+
+    <delete id="deleteBusPlantingResultByResultIds" parameterType="String">
+        delete from bus_planting_result where result_id in
+        <foreach item="resultId" collection="array" open="(" separator="," close=")">
+            #{resultId}
+        </foreach>
+    </delete>
+</mapper>

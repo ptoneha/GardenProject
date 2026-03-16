@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.agriculture.mapper.BusContainerMapper">
+
+    <resultMap type="BusContainer" id="BusContainerResult">
+        <result property="containerId" column="container_id" />
+        <result property="landId" column="land_id" />
+        <result property="containerName" column="container_name" />
+        <result property="containerType" column="container_type" />
+        <result property="plantingSites" column="planting_sites" />
+        <result property="depthCm" column="depth_cm" />
+        <result property="widthCm" column="width_cm" />
+        <result property="heightCm" column="height_cm" />
+        <result property="isActive" column="is_active" />
+    </resultMap>
+
+    <sql id="selectBusContainerVo">
+        select container_id, land_id, container_name, container_type, planting_sites, depth_cm, width_cm, height_cm, is_active
+        from bus_container
+    </sql>
+
+    <select id="selectBusContainerList" parameterType="BusContainer" resultMap="BusContainerResult">
+        <include refid="selectBusContainerVo"/>
+        <where>
+            <if test="landId != null">and land_id = #{landId}</if>
+            <if test="containerName != null and containerName != ''">and container_name like concat('%', #{containerName}, '%')</if>
+        </where>
+    </select>
+
+    <select id="selectBusContainerByContainerId" parameterType="Long" resultMap="BusContainerResult">
+        <include refid="selectBusContainerVo"/>
+        where container_id = #{containerId}
+    </select>
+
+    <select id="selectBusContainerByLandIds" resultMap="BusContainerResult">
+        <include refid="selectBusContainerVo"/>
+        where land_id in
+        <foreach item="landId" collection="list" open="(" separator="," close=")">
+            #{landId}
+        </foreach>
+        order by land_id, container_id
+    </select>
+
+    <insert id="insertBusContainer" parameterType="BusContainer" useGeneratedKeys="true" keyProperty="containerId">
+        insert into bus_container
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="landId != null">land_id,</if>
+            <if test="containerName != null and containerName != ''">container_name,</if>
+            <if test="containerType != null">container_type,</if>
+            <if test="plantingSites != null">planting_sites,</if>
+            <if test="depthCm != null">depth_cm,</if>
+            <if test="widthCm != null">width_cm,</if>
+            <if test="heightCm != null">height_cm,</if>
+            <if test="isActive != null and isActive != ''">is_active,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="landId != null">#{landId},</if>
+            <if test="containerName != null and containerName != ''">#{containerName},</if>
+            <if test="containerType != null">#{containerType},</if>
+            <if test="plantingSites != null">#{plantingSites},</if>
+            <if test="depthCm != null">#{depthCm},</if>
+            <if test="widthCm != null">#{widthCm},</if>
+            <if test="heightCm != null">#{heightCm},</if>
+            <if test="isActive != null and isActive != ''">#{isActive},</if>
+        </trim>
+    </insert>
+
+    <update id="updateBusContainer" parameterType="BusContainer">
+        update bus_container
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="landId != null">land_id = #{landId},</if>
+            <if test="containerName != null and containerName != ''">container_name = #{containerName},</if>
+            <if test="containerType != null">container_type = #{containerType},</if>
+            <if test="plantingSites != null">planting_sites = #{plantingSites},</if>
+            <if test="depthCm != null">depth_cm = #{depthCm},</if>
+            <if test="widthCm != null">width_cm = #{widthCm},</if>
+            <if test="heightCm != null">height_cm = #{heightCm},</if>
+            <if test="isActive != null and isActive != ''">is_active = #{isActive},</if>
+        </trim>
+        where container_id = #{containerId}
+    </update>
+
+    <delete id="deleteBusContainerByContainerId" parameterType="Long">
+        delete from bus_container where container_id = #{containerId}
+    </delete>
+
+    <delete id="deleteBusContainerByContainerIds" parameterType="String">
+        delete from bus_container where container_id in
+        <foreach item="containerId" collection="array" open="(" separator="," close=")">
+            #{containerId}
+        </foreach>
+    </delete>
+</mapper>

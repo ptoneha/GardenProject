@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.agriculture.mapper.BusCropMapper">
+    
+    <resultMap type="BusCrop" id="BusCropResult">
+        <result property="cropId"    column="crop_id"    />
+        <result property="cropCode"    column="crop_code"    />
+        <result property="cropName"    column="crop_name"    />
+        <result property="category"    column="category"    />
+        <result property="plantPurpose"    column="plant_purpose"    />
+        <result property="isPulse"    column="is_pulse"    />
+        <result property="imageUrl"    column="image_url"    />
+    </resultMap>
+
+    <sql id="selectBusCropVo">
+        select crop_id, crop_code, crop_name, category, plant_purpose, is_pulse, image_url from bus_crop
+    </sql>
+
+    <select id="selectBusCropList" parameterType="BusCrop" resultMap="BusCropResult">
+        <include refid="selectBusCropVo"/>
+        <where>  
+            <if test="cropCode != null "> and crop_code like concat('%', #{cropCode}, '%')</if>
+            <if test="cropName != null  and cropName != ''"> and crop_name like concat('%', #{cropName}, '%')</if>
+            <if test="category != null  and category != ''"> and category = #{category}</if>
+            <if test="plantPurpose != null "> and plant_purpose = #{plantPurpose}</if>
+        </where>
+    </select>
+    
+    <select id="selectBusCropByCropId" parameterType="Long" resultMap="BusCropResult">
+        <include refid="selectBusCropVo"/>
+        where crop_id = #{cropId}
+    </select>
+
+    <insert id="insertBusCrop" parameterType="BusCrop" useGeneratedKeys="true" keyProperty="cropId">
+        insert into bus_crop
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="cropCode != null">crop_code,</if>
+            <if test="cropName != null and cropName != ''">crop_name,</if>
+            <if test="category != null and category != ''">category,</if>
+            <if test="plantPurpose != null">plant_purpose,</if>
+            <if test="isPulse != null and isPulse != ''">is_pulse,</if>
+            <if test="imageUrl != null">image_url,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="cropCode != null">#{cropCode},</if>
+            <if test="cropName != null and cropName != ''">#{cropName},</if>
+            <if test="category != null and category != ''">#{category},</if>
+            <if test="plantPurpose != null">#{plantPurpose},</if>
+            <if test="isPulse != null and isPulse != ''">#{isPulse},</if>
+            <if test="imageUrl != null">#{imageUrl},</if>
+         </trim>
+    </insert>
+
+    <update id="updateBusCrop" parameterType="BusCrop">
+        update bus_crop
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="cropCode != null">crop_code = #{cropCode},</if>
+            <if test="cropName != null and cropName != ''">crop_name = #{cropName},</if>
+            <if test="category != null and category != ''">category = #{category},</if>
+            <if test="plantPurpose != null">plant_purpose = #{plantPurpose},</if>
+            <if test="isPulse != null and isPulse != ''">is_pulse = #{isPulse},</if>
+            <if test="imageUrl != null">image_url = #{imageUrl},</if>
+        </trim>
+        where crop_id = #{cropId}
+    </update>
+
+    <delete id="deleteBusCropByCropId" parameterType="Long">
+        delete from bus_crop where crop_id = #{cropId}
+    </delete>
+
+    <delete id="deleteBusCropByCropIds" parameterType="String">
+        delete from bus_crop where crop_id in 
+        <foreach item="cropId" collection="array" open="(" separator="," close=")">
+            #{cropId}
+        </foreach>
+    </delete>
+</mapper>

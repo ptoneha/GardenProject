@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.agriculture.mapper.BusLandMapper">
+
+    <resultMap type="BusLand" id="BusLandResult">
+        <result property="landId" column="land_id" />
+        <result property="landCode" column="land_code" />
+        <result property="landType" column="land_type" />
+        <result property="inputValue" column="input_value" />
+        <result property="unit" column="unit" />
+        <result property="areaSqm" column="area_sqm" />
+        <result property="lightLevel" column="light_level" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectBusLandVo">
+        select land_id, land_code, land_type, input_value, unit, area_sqm, light_level, create_by, create_time, remark
+        from bus_land
+    </sql>
+
+    <select id="selectBusLandList" parameterType="BusLand" resultMap="BusLandResult">
+        <include refid="selectBusLandVo"/>
+        <where>
+            <if test="landCode != null and landCode != ''">and land_code like concat('%', #{landCode}, '%')</if>
+            <if test="landType != null">and land_type = #{landType}</if>
+            <if test="unit != null and unit != ''">and unit = #{unit}</if>
+        </where>
+    </select>
+
+    <select id="selectBusLandByLandId" parameterType="Long" resultMap="BusLandResult">
+        <include refid="selectBusLandVo"/>
+        where land_id = #{landId}
+    </select>
+
+    <select id="selectBusLandByLandIds" resultMap="BusLandResult">
+        <include refid="selectBusLandVo"/>
+        where land_id in
+        <foreach item="landId" collection="list" open="(" separator="," close=")">
+            #{landId}
+        </foreach>
+    </select>
+
+    <insert id="insertBusLand" parameterType="BusLand" useGeneratedKeys="true" keyProperty="landId">
+        insert into bus_land
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="landCode != null and landCode != ''">land_code,</if>
+            <if test="landType != null">land_type,</if>
+            <if test="inputValue != null">input_value,</if>
+            <if test="unit != null and unit != ''">unit,</if>
+            <if test="areaSqm != null">area_sqm,</if>
+            <if test="lightLevel != null">light_level,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="landCode != null and landCode != ''">#{landCode},</if>
+            <if test="landType != null">#{landType},</if>
+            <if test="inputValue != null">#{inputValue},</if>
+            <if test="unit != null and unit != ''">#{unit},</if>
+            <if test="areaSqm != null">#{areaSqm},</if>
+            <if test="lightLevel != null">#{lightLevel},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateBusLand" parameterType="BusLand">
+        update bus_land
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="landCode != null and landCode != ''">land_code = #{landCode},</if>
+            <if test="landType != null">land_type = #{landType},</if>
+            <if test="inputValue != null">input_value = #{inputValue},</if>
+            <if test="unit != null and unit != ''">unit = #{unit},</if>
+            <if test="areaSqm != null">area_sqm = #{areaSqm},</if>
+            <if test="lightLevel != null">light_level = #{lightLevel},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where land_id = #{landId}
+    </update>
+
+    <delete id="deleteBusLandByLandId" parameterType="Long">
+        delete from bus_land where land_id = #{landId}
+    </delete>
+
+    <delete id="deleteBusLandByLandIds" parameterType="String">
+        delete from bus_land where land_id in
+        <foreach item="landId" collection="array" open="(" separator="," close=")">
+            #{landId}
+        </foreach>
+    </delete>
+</mapper>

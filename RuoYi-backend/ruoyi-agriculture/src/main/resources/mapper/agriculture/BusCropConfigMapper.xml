@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.agriculture.mapper.BusCropConfigMapper">
+    
+    <resultMap type="BusCropConfig" id="BusCropConfigResult">
+        <result property="configId"    column="config_id"    />
+        <result property="cropId"    column="crop_id"    />
+        <result property="landType"    column="land_type"    />
+        <result property="startMonth"    column="start_month"    />
+        <result property="endMonth"    column="end_month"    />
+        <result property="growthDays"    column="growth_days"    />
+        <result property="plantSpacingCm"    column="plant_spacing_cm"    />
+        <result property="rowSpacingCm"    column="row_spacing_cm"    />
+        <result property="dataUnit"    column="data_unit"    />
+        <result property="yieldVal"    column="yield_val"    />
+        <result property="costVal"    column="cost_val"    />
+        <result property="marketPrice"    column="market_price"    />
+        <result property="utilityScore"    column="utility_score"    />
+        <result property="sunlightReq"    column="sunlight_req"    />
+        <result property="minDepthReq"    column="min_depth_req"    />
+    </resultMap>
+
+    <sql id="selectBusCropConfigVo">
+        select config_id, crop_id, land_type, start_month, end_month, growth_days, plant_spacing_cm, row_spacing_cm, data_unit, yield_val, cost_val, market_price, utility_score, sunlight_req, min_depth_req from bus_crop_config
+    </sql>
+
+    <select id="selectBusCropConfigList" parameterType="BusCropConfig" resultMap="BusCropConfigResult">
+        <include refid="selectBusCropConfigVo"/>
+        <where>  
+            <if test="cropId != null "> and crop_id = #{cropId}</if>
+            <if test="landType != null "> and land_type = #{landType}</if>
+        </where>
+    </select>
+    
+    <select id="selectBusCropConfigByConfigId" parameterType="Long" resultMap="BusCropConfigResult">
+        <include refid="selectBusCropConfigVo"/>
+        where config_id = #{configId}
+    </select>
+
+    <insert id="insertBusCropConfig" parameterType="BusCropConfig" useGeneratedKeys="true" keyProperty="configId">
+        insert into bus_crop_config
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="cropId != null">crop_id,</if>
+            <if test="landType != null">land_type,</if>
+            <if test="startMonth != null">start_month,</if>
+            <if test="endMonth != null">end_month,</if>
+            <if test="growthDays != null">growth_days,</if>
+            <if test="plantSpacingCm != null">plant_spacing_cm,</if>
+            <if test="rowSpacingCm != null">row_spacing_cm,</if>
+            <if test="dataUnit != null and dataUnit != ''">data_unit,</if>
+            <if test="yieldVal != null">yield_val,</if>
+            <if test="costVal != null">cost_val,</if>
+            <if test="marketPrice != null">market_price,</if>
+            <if test="utilityScore != null">utility_score,</if>
+            <if test="sunlightReq != null">sunlight_req,</if>
+            <if test="minDepthReq != null">min_depth_req,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="cropId != null">#{cropId},</if>
+            <if test="landType != null">#{landType},</if>
+            <if test="startMonth != null">#{startMonth},</if>
+            <if test="endMonth != null">#{endMonth},</if>
+            <if test="growthDays != null">#{growthDays},</if>
+            <if test="plantSpacingCm != null">#{plantSpacingCm},</if>
+            <if test="rowSpacingCm != null">#{rowSpacingCm},</if>
+            <if test="dataUnit != null and dataUnit != ''">#{dataUnit},</if>
+            <if test="yieldVal != null">#{yieldVal},</if>
+            <if test="costVal != null">#{costVal},</if>
+            <if test="marketPrice != null">#{marketPrice},</if>
+            <if test="utilityScore != null">#{utilityScore},</if>
+            <if test="sunlightReq != null">#{sunlightReq},</if>
+            <if test="minDepthReq != null">#{minDepthReq},</if>
+         </trim>
+    </insert>
+
+    <update id="updateBusCropConfig" parameterType="BusCropConfig">
+        update bus_crop_config
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="cropId != null">crop_id = #{cropId},</if>
+            <if test="landType != null">land_type = #{landType},</if>
+            <if test="startMonth != null">start_month = #{startMonth},</if>
+            <if test="endMonth != null">end_month = #{endMonth},</if>
+            <if test="growthDays != null">growth_days = #{growthDays},</if>
+            <if test="plantSpacingCm != null">plant_spacing_cm = #{plantSpacingCm},</if>
+            <if test="rowSpacingCm != null">row_spacing_cm = #{rowSpacingCm},</if>
+            <if test="dataUnit != null and dataUnit != ''">data_unit = #{dataUnit},</if>
+            <if test="yieldVal != null">yield_val = #{yieldVal},</if>
+            <if test="costVal != null">cost_val = #{costVal},</if>
+            <if test="marketPrice != null">market_price = #{marketPrice},</if>
+            <if test="utilityScore != null">utility_score = #{utilityScore},</if>
+            <if test="sunlightReq != null">sunlight_req = #{sunlightReq},</if>
+            <if test="minDepthReq != null">min_depth_req = #{minDepthReq},</if>
+        </trim>
+        where config_id = #{configId}
+    </update>
+
+    <delete id="deleteBusCropConfigByConfigId" parameterType="Long">
+        delete from bus_crop_config where config_id = #{configId}
+    </delete>
+
+    <delete id="deleteBusCropConfigByConfigIds" parameterType="String">
+        delete from bus_crop_config where config_id in 
+        <foreach item="configId" collection="array" open="(" separator="," close=")">
+            #{configId}
+        </foreach>
+    </delete>
+</mapper>

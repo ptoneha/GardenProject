@@ -1,0 +1,22 @@
+# 后端忽略项
+**/target/
+**/.idea/
+**/*.iml
+**/bin/
+**/logs/
+
+# 前端忽略项
+**/node_modules/
+**/dist/
+**/.env.production
+**/local
+
+# Python 忽略项
+**/venv/
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+
+# 系统忽略项
+.DS_Store
+Thumbs.db
