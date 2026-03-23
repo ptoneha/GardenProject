@@ -28,6 +28,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="landCode != null and landCode != ''">and land_code like concat('%', #{landCode}, '%')</if>
             <if test="landType != null">and land_type = #{landType}</if>
             <if test="unit != null and unit != ''">and unit = #{unit}</if>
+            <if test="createBy != null and createBy != ''">and create_by = #{createBy}</if>
         </where>
     </select>
 

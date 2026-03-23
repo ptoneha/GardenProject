@@ -75,7 +75,9 @@ public class BusOptimizationTaskController extends BaseController
     @PostMapping
     public AjaxResult add(@RequestBody BusOptimizationTask busOptimizationTask)
     {
-        return toAjax(busOptimizationTaskService.insertBusOptimizationTask(busOptimizationTask));
+        return busOptimizationTaskService.insertBusOptimizationTask(busOptimizationTask) > 0
+            ? AjaxResult.success("success", busOptimizationTask)
+            : AjaxResult.error();
     }
 
     /**
@@ -86,7 +88,9 @@ public class BusOptimizationTaskController extends BaseController
     @PutMapping
     public AjaxResult edit(@RequestBody BusOptimizationTask busOptimizationTask)
     {
-        return toAjax(busOptimizationTaskService.updateBusOptimizationTask(busOptimizationTask));
+        return busOptimizationTaskService.updateBusOptimizationTask(busOptimizationTask) > 0
+            ? AjaxResult.success("success", busOptimizationTask)
+            : AjaxResult.error();
     }
 
     /**

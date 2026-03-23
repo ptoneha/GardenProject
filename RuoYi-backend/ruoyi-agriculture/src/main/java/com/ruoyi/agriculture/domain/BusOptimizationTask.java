@@ -8,9 +8,6 @@ import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
  * 种植优化任务对象 bus_optimization_task
- * 
- * @author ruoyi
- * @date 2026-03-15
  */
 public class BusOptimizationTask extends BaseEntity
 {
@@ -44,89 +41,155 @@ public class BusOptimizationTask extends BaseEntity
     @Excel(name = "任务状态")
     private String status;
 
-    public void setTaskId(Long taskId) 
-    {
-        this.taskId = taskId;
-    }
+    /** 作物白名单，逗号分隔的 crop_id 列表 */
+    private String cropWhitelist;
 
-    public Long getTaskId() 
+    /** 作物黑名单，逗号分隔的 crop_id 列表 */
+    private String cropBlacklist;
+
+    /** 豆类最小占比，取值范围 [0,1] */
+    private BigDecimal minPulseRatio;
+
+    /** 任务季节 */
+    private String taskSeason;
+
+    /** 任务归属用户ID */
+    private Long ownerUserId;
+
+    public Long getTaskId()
     {
         return taskId;
     }
 
-    public void setTaskName(String taskName) 
+    public void setTaskId(Long taskId)
     {
-        this.taskName = taskName;
+        this.taskId = taskId;
     }
 
-    public String getTaskName() 
+    public String getTaskName()
     {
         return taskName;
     }
 
-    public void setMode(Integer mode) 
+    public void setTaskName(String taskName)
     {
-        this.mode = mode;
+        this.taskName = taskName;
     }
 
-    public Integer getMode() 
+    public Integer getMode()
     {
         return mode;
     }
 
-    public void setTotalBudget(BigDecimal totalBudget) 
+    public void setMode(Integer mode)
     {
-        this.totalBudget = totalBudget;
+        this.mode = mode;
     }
 
-    public BigDecimal getTotalBudget() 
+    public BigDecimal getTotalBudget()
     {
         return totalBudget;
     }
 
-    public void setWeightAesthetic(BigDecimal weightAesthetic) 
+    public void setTotalBudget(BigDecimal totalBudget)
     {
-        this.weightAesthetic = weightAesthetic;
+        this.totalBudget = totalBudget;
     }
 
-    public BigDecimal getWeightAesthetic() 
+    public BigDecimal getWeightAesthetic()
     {
         return weightAesthetic;
     }
 
-    public void setWeightYield(BigDecimal weightYield) 
+    public void setWeightAesthetic(BigDecimal weightAesthetic)
     {
-        this.weightYield = weightYield;
+        this.weightAesthetic = weightAesthetic;
     }
 
-    public BigDecimal getWeightYield() 
+    public BigDecimal getWeightYield()
     {
         return weightYield;
     }
 
-    public void setWeightDifficulty(BigDecimal weightDifficulty) 
+    public void setWeightYield(BigDecimal weightYield)
     {
-        this.weightDifficulty = weightDifficulty;
+        this.weightYield = weightYield;
     }
 
-    public BigDecimal getWeightDifficulty() 
+    public BigDecimal getWeightDifficulty()
     {
         return weightDifficulty;
     }
 
-    public void setStatus(String status) 
+    public void setWeightDifficulty(BigDecimal weightDifficulty)
     {
-        this.status = status;
+        this.weightDifficulty = weightDifficulty;
     }
 
-    public String getStatus() 
+    public String getStatus()
     {
         return status;
     }
 
+    public void setStatus(String status)
+    {
+        this.status = status;
+    }
+
+    public String getCropWhitelist()
+    {
+        return cropWhitelist;
+    }
+
+    public void setCropWhitelist(String cropWhitelist)
+    {
+        this.cropWhitelist = cropWhitelist;
+    }
+
+    public String getCropBlacklist()
+    {
+        return cropBlacklist;
+    }
+
+    public void setCropBlacklist(String cropBlacklist)
+    {
+        this.cropBlacklist = cropBlacklist;
+    }
+
+    public BigDecimal getMinPulseRatio()
+    {
+        return minPulseRatio;
+    }
+
+    public void setMinPulseRatio(BigDecimal minPulseRatio)
+    {
+        this.minPulseRatio = minPulseRatio;
+    }
+
+    public String getTaskSeason()
+    {
+        return taskSeason;
+    }
+
+    public void setTaskSeason(String taskSeason)
+    {
+        this.taskSeason = taskSeason;
+    }
+
+    public Long getOwnerUserId()
+    {
+        return ownerUserId;
+    }
+
+    public void setOwnerUserId(Long ownerUserId)
+    {
+        this.ownerUserId = ownerUserId;
+    }
+
     @Override
-    public String toString() {
-        return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
+    public String toString()
+    {
+        return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
             .append("taskId", getTaskId())
             .append("taskName", getTaskName())
             .append("mode", getMode())
@@ -135,6 +198,11 @@ public class BusOptimizationTask extends BaseEntity
             .append("weightYield", getWeightYield())
             .append("weightDifficulty", getWeightDifficulty())
             .append("status", getStatus())
+            .append("cropWhitelist", getCropWhitelist())
+            .append("cropBlacklist", getCropBlacklist())
+            .append("minPulseRatio", getMinPulseRatio())
+            .append("taskSeason", getTaskSeason())
+            .append("ownerUserId", getOwnerUserId())
             .append("createTime", getCreateTime())
             .toString();
     }

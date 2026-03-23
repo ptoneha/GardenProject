@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * 传给Python算法的输入对象
+ * 传给 Python 算法的输入对象
  */
 public class AgriAlgorithmRequest
 {
@@ -13,6 +13,16 @@ public class AgriAlgorithmRequest
     private Integer mode;
 
     private BigDecimal budget;
+
+    private String taskSeason;
+
+    private BigDecimal minPulseRatio;
+
+    private Long ownerUserId;
+
+    private List<Long> cropWhitelist;
+
+    private List<Long> cropBlacklist;
 
     private List<LandItem> lands;
 
@@ -50,6 +60,56 @@ public class AgriAlgorithmRequest
     public void setBudget(BigDecimal budget)
     {
         this.budget = budget;
+    }
+
+    public String getTaskSeason()
+    {
+        return taskSeason;
+    }
+
+    public void setTaskSeason(String taskSeason)
+    {
+        this.taskSeason = taskSeason;
+    }
+
+    public BigDecimal getMinPulseRatio()
+    {
+        return minPulseRatio;
+    }
+
+    public void setMinPulseRatio(BigDecimal minPulseRatio)
+    {
+        this.minPulseRatio = minPulseRatio;
+    }
+
+    public Long getOwnerUserId()
+    {
+        return ownerUserId;
+    }
+
+    public void setOwnerUserId(Long ownerUserId)
+    {
+        this.ownerUserId = ownerUserId;
+    }
+
+    public List<Long> getCropWhitelist()
+    {
+        return cropWhitelist;
+    }
+
+    public void setCropWhitelist(List<Long> cropWhitelist)
+    {
+        this.cropWhitelist = cropWhitelist;
+    }
+
+    public List<Long> getCropBlacklist()
+    {
+        return cropBlacklist;
+    }
+
+    public void setCropBlacklist(List<Long> cropBlacklist)
+    {
+        this.cropBlacklist = cropBlacklist;
     }
 
     public List<LandItem> getLands()
@@ -251,6 +311,8 @@ public class AgriAlgorithmRequest
     {
         private Long cropId;
         private Integer landType;
+        private Integer startMonth;
+        private Integer endMonth;
         private BigDecimal yieldVal;
         private BigDecimal costVal;
         private BigDecimal marketPrice;
@@ -276,6 +338,26 @@ public class AgriAlgorithmRequest
         public void setLandType(Integer landType)
         {
             this.landType = landType;
+        }
+
+        public Integer getStartMonth()
+        {
+            return startMonth;
+        }
+
+        public void setStartMonth(Integer startMonth)
+        {
+            this.startMonth = startMonth;
+        }
+
+        public Integer getEndMonth()
+        {
+            return endMonth;
+        }
+
+        public void setEndMonth(Integer endMonth)
+        {
+            this.endMonth = endMonth;
         }
 
         public BigDecimal getYieldVal()

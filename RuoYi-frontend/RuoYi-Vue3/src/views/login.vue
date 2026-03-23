@@ -40,7 +40,10 @@
           <img :src="codeUrl" @click="getCode" class="login-code-img"/>
         </div>
       </el-form-item>
-      <el-checkbox v-model="loginForm.rememberMe" style="margin:0px 0px 25px 0px;">记住密码</el-checkbox>
+      <div class="login-options">
+        <el-checkbox v-model="loginForm.rememberMe">记住密码</el-checkbox>
+        <router-link v-if="register" class="link-type register-link" :to="'/register'">立即注册</router-link>
+      </div>
       <el-form-item style="width:100%;">
         <el-button
           :loading="loading"
@@ -52,9 +55,6 @@
           <span v-if="!loading">登 录</span>
           <span v-else>登 录 中...</span>
         </el-button>
-        <div style="float: right;" v-if="register">
-          <router-link class="link-type" :to="'/register'">立即注册</router-link>
-        </div>
       </el-form-item>
     </el-form>
     <!--  底部  -->
@@ -143,9 +143,13 @@ function handleLogin() {
 function getCode() {
   getCodeImg().then(res => {
     captchaEnabled.value = res.captchaEnabled === undefined ? true : res.captchaEnabled
+    register.value = res.registerEnabled === undefined ? false : !!res.registerEnabled
     if (captchaEnabled.value) {
       codeUrl.value = "data:image/gif;base64," + res.img
       loginForm.value.uuid = res.uuid
+    } else {
+      codeUrl.value = ""
+      loginForm.value.uuid = ""
     }
   })
 }
@@ -202,6 +206,19 @@ getCookie()
   font-size: 13px;
   text-align: center;
   color: #bfbfbf;
+}
+.login-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 0 25px 0;
+}
+.register-link {
+  color: #409eff;
+  font-size: 14px;
+}
+.register-link:hover {
+  color: #66b1ff;
 }
 .login-code {
   width: 33%;

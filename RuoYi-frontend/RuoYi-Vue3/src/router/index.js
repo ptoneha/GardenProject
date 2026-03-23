@@ -1,6 +1,7 @@
 import { createWebHistory, createRouter } from 'vue-router'
 /* Layout */
 import Layout from '@/layout'
+import PortalLayout from '@/layout/portal/index.vue'
 
 /**
  * Note: 路由配置项
@@ -46,6 +47,50 @@ export const constantRoutes = [
     path: '/register',
     component: () => import('@/views/register'),
     hidden: true
+  },
+  {
+    path: '/portal',
+    component: PortalLayout,
+    hidden: true,
+    redirect: '/portal/dashboard',
+    children: [
+      {
+        path: 'dashboard',
+        component: () => import('@/views/portal/dashboard/index.vue'),
+        name: 'PortalDashboard',
+        meta: { title: '门户首页' }
+      },
+      {
+        path: 'tasks',
+        component: () => import('@/views/portal/tasks/index.vue'),
+        name: 'PortalTasks',
+        meta: { title: '种植计划' }
+      },
+      {
+        path: 'results',
+        component: () => import('@/views/portal/results/index.vue'),
+        name: 'PortalResults',
+        meta: { title: '结果画廊' }
+      },
+      {
+        path: 'results/detail/:planId',
+        component: () => import('@/views/portal/results/detail.vue'),
+        name: 'PortalPlanDetail',
+        meta: { title: '方案详情' }
+      },
+      {
+        path: 'lands',
+        component: () => import('@/views/portal/lands/index.vue'),
+        name: 'PortalLands',
+        meta: { title: '我的地块' }
+      },
+      {
+        path: 'containers',
+        component: () => import('@/views/portal/containers/index.vue'),
+        name: 'PortalContainers',
+        meta: { title: '我的容器' }
+      }
+    ]
   },
   {
     path: "/:pathMatch(.*)*",

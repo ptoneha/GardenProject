@@ -3,32 +3,42 @@
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ruoyi.agriculture.mapper.BusOptimizationTaskMapper">
-    
+
     <resultMap type="BusOptimizationTask" id="BusOptimizationTaskResult">
-        <result property="taskId"    column="task_id"    />
-        <result property="taskName"    column="task_name"    />
-        <result property="mode"    column="mode"    />
-        <result property="totalBudget"    column="total_budget"    />
-        <result property="weightAesthetic"    column="weight_aesthetic"    />
-        <result property="weightYield"    column="weight_yield"    />
-        <result property="weightDifficulty"    column="weight_difficulty"    />
-        <result property="status"    column="status"    />
-        <result property="createTime"    column="create_time"    />
+        <result property="taskId" column="task_id" />
+        <result property="taskName" column="task_name" />
+        <result property="mode" column="mode" />
+        <result property="totalBudget" column="total_budget" />
+        <result property="weightAesthetic" column="weight_aesthetic" />
+        <result property="weightYield" column="weight_yield" />
+        <result property="weightDifficulty" column="weight_difficulty" />
+        <result property="status" column="status" />
+        <result property="cropWhitelist" column="crop_whitelist" />
+        <result property="cropBlacklist" column="crop_blacklist" />
+        <result property="minPulseRatio" column="min_pulse_ratio" />
+        <result property="taskSeason" column="task_season" />
+        <result property="ownerUserId" column="owner_user_id" />
+        <result property="createTime" column="create_time" />
     </resultMap>
 
     <sql id="selectBusOptimizationTaskVo">
-        select task_id, task_name, mode, total_budget, weight_aesthetic, weight_yield, weight_difficulty, status, create_time from bus_optimization_task
+        select task_id, task_name, mode, total_budget, weight_aesthetic, weight_yield, weight_difficulty,
+               status, crop_whitelist, crop_blacklist, min_pulse_ratio, task_season, owner_user_id, create_time
+        from bus_optimization_task
     </sql>
 
     <select id="selectBusOptimizationTaskList" parameterType="BusOptimizationTask" resultMap="BusOptimizationTaskResult">
         <include refid="selectBusOptimizationTaskVo"/>
-        <where>  
-            <if test="taskName != null  and taskName != ''"> and task_name like concat('%', #{taskName}, '%')</if>
-            <if test="mode != null "> and mode = #{mode}</if>
-            <if test="status != null  and status != ''"> and status = #{status}</if>
+        <where>
+            <if test="taskName != null and taskName != ''">and task_name like concat('%', #{taskName}, '%')</if>
+            <if test="mode != null">and mode = #{mode}</if>
+            <if test="status != null and status != ''">and status = #{status}</if>
+            <if test="taskSeason != null and taskSeason != ''">and task_season = #{taskSeason}</if>
+            <if test="ownerUserId != null">and owner_user_id = #{ownerUserId}</if>
         </where>
+        order by task_id desc
     </select>
-    
+
     <select id="selectBusOptimizationTaskByTaskId" parameterType="Long" resultMap="BusOptimizationTaskResult">
         <include refid="selectBusOptimizationTaskVo"/>
         where task_id = #{taskId}
@@ -44,8 +54,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="weightYield != null">weight_yield,</if>
             <if test="weightDifficulty != null">weight_difficulty,</if>
             <if test="status != null">status,</if>
+            <if test="cropWhitelist != null">crop_whitelist,</if>
+            <if test="cropBlacklist != null">crop_blacklist,</if>
+            <if test="minPulseRatio != null">min_pulse_ratio,</if>
+            <if test="taskSeason != null and taskSeason != ''">task_season,</if>
+            <if test="ownerUserId != null">owner_user_id,</if>
             <if test="createTime != null">create_time,</if>
-         </trim>
+        </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="taskName != null and taskName != ''">#{taskName},</if>
             <if test="mode != null">#{mode},</if>
@@ -54,8 +69,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="weightYield != null">#{weightYield},</if>
             <if test="weightDifficulty != null">#{weightDifficulty},</if>
             <if test="status != null">#{status},</if>
+            <if test="cropWhitelist != null">#{cropWhitelist},</if>
+            <if test="cropBlacklist != null">#{cropBlacklist},</if>
+            <if test="minPulseRatio != null">#{minPulseRatio},</if>
+            <if test="taskSeason != null and taskSeason != ''">#{taskSeason},</if>
+            <if test="ownerUserId != null">#{ownerUserId},</if>
             <if test="createTime != null">#{createTime},</if>
-         </trim>
+        </trim>
     </insert>
 
     <update id="updateBusOptimizationTask" parameterType="BusOptimizationTask">
@@ -68,9 +88,21 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="weightYield != null">weight_yield = #{weightYield},</if>
             <if test="weightDifficulty != null">weight_difficulty = #{weightDifficulty},</if>
             <if test="status != null">status = #{status},</if>
+            <if test="cropWhitelist != null">crop_whitelist = #{cropWhitelist},</if>
+            <if test="cropBlacklist != null">crop_blacklist = #{cropBlacklist},</if>
+            <if test="minPulseRatio != null">min_pulse_ratio = #{minPulseRatio},</if>
+            <if test="taskSeason != null">task_season = #{taskSeason},</if>
+            <if test="ownerUserId != null">owner_user_id = #{ownerUserId},</if>
             <if test="createTime != null">create_time = #{createTime},</if>
         </trim>
         where task_id = #{taskId}
+    </update>
+
+    <update id="updateTaskStatusWithLock">
+        update bus_optimization_task
+        set status = #{toStatus}
+        where task_id = #{taskId}
+          and status = #{fromStatus}
     </update>
 
     <delete id="deleteBusOptimizationTaskByTaskId" parameterType="Long">
@@ -78,7 +110,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </delete>
 
     <delete id="deleteBusOptimizationTaskByTaskIds" parameterType="String">
-        delete from bus_optimization_task where task_id in 
+        delete from bus_optimization_task where task_id in
         <foreach item="taskId" collection="array" open="(" separator="," close=")">
             #{taskId}
         </foreach>

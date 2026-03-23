@@ -1,0 +1,30 @@
+2026-03-17 10:51:50: Info: D:\MySQL\MySQL Shell 8.0\bin\mysqlsh.exe   Ver 8.0.32 for Win64 on x86_64 - for MySQL 8.0.32 (MySQL Community Server (GPL)) - build 9612040 - commit_id 92dff1789f3b984a031f695328afb91ffc160300
+2026-03-17 10:51:50: Info: Using credential store helper: D:\MySQL\MySQL Shell 8.0\bin\mysql-secret-store-windows-credential.exe
+2026-03-17 10:51:50: Info: Setting Python home to 'D:\MySQL\MySQL Shell 8.0\lib\Python3.10'
+2026-03-17 10:51:50: Info: Loading startup files...
+2026-03-17 10:51:50: Info: Loading plugins...
+2026-03-17 10:51:51: Info: Pager has been set to 'more.com'.
+2026-03-17 10:51:51: Warning: Using a password on the command line interface can be insecure.
+2026-03-17 10:51:51: Info: Connecting to MySQL at: root@localhost:3306/graden
+2026-03-17 10:51:51: Info: main: tid=121: CONNECTED: localhost:3306
+2026-03-17 10:51:51: Info: Now tracking 'sql_mode' system variable.
+2026-03-17 10:51:51: Info: D:\MySQL\MySQL Shell 8.0\bin\mysqlsh.exe   Ver 8.0.32 for Win64 on x86_64 - for MySQL 8.0.32 (MySQL Community Server (GPL)) - build 9612040 - commit_id 92dff1789f3b984a031f695328afb91ffc160300
+2026-03-17 10:51:51: Info: Using credential store helper: D:\MySQL\MySQL Shell 8.0\bin\mysql-secret-store-windows-credential.exe
+2026-03-17 10:51:51: Info: Setting Python home to 'D:\MySQL\MySQL Shell 8.0\lib\Python3.10'
+2026-03-17 10:51:51: Info: Loading startup files...
+2026-03-17 10:51:51: Info: Loading plugins...
+2026-03-17 10:51:51: Info: Pager has been set to 'more.com'.
+2026-03-17 10:51:51: Warning: Using a password on the command line interface can be insecure.
+2026-03-17 10:51:51: Info: Connecting to MySQL at: root@localhost:3306/graden
+2026-03-17 10:51:51: Info: main: tid=123: CONNECTED: localhost:3306
+2026-03-17 10:51:51: Info: Now tracking 'sql_mode' system variable.
+2026-03-17 10:52:45: Info: D:\MySQL\MySQL Shell 8.0\bin\mysqlsh.exe   Ver 8.0.32 for Win64 on x86_64 - for MySQL 8.0.32 (MySQL Community Server (GPL)) - build 9612040 - commit_id 92dff1789f3b984a031f695328afb91ffc160300
+2026-03-17 10:52:45: Info: Using credential store helper: D:\MySQL\MySQL Shell 8.0\bin\mysql-secret-store-windows-credential.exe
+2026-03-17 10:52:45: Info: Setting Python home to 'D:\MySQL\MySQL Shell 8.0\lib\Python3.10'
+2026-03-17 10:52:45: Info: Loading startup files...
+2026-03-17 10:52:45: Info: Loading plugins...
+2026-03-17 10:52:46: Info: Pager has been set to 'more.com'.
+2026-03-17 10:52:46: Warning: Using a password on the command line interface can be insecure.
+2026-03-17 10:52:46: Info: Connecting to MySQL at: root@localhost:3306/graden
+2026-03-17 10:52:46: Info: main: tid=125: CONNECTED: localhost:3306
+2026-03-17 10:52:46: Info: Now tracking 'sql_mode' system variable.

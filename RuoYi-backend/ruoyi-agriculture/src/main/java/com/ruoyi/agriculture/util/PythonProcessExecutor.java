@@ -7,8 +7,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -18,11 +22,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import com.ruoyi.agriculture.config.AgriPythonProperties;
+import com.ruoyi.agriculture.constant.AgriErrorCode;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.Threads;
 
 /**
- * Python进程调用器
+ * Python 进程调用器
  */
 @Component
 public class PythonProcessExecutor
@@ -39,11 +44,24 @@ public class PythonProcessExecutor
     public String execute(String inputJson) throws Exception
     {
         validateConfig();
+
         ProcessBuilder processBuilder = new ProcessBuilder(Arrays.asList(
             agriPythonProperties.getExecutable(),
             agriPythonProperties.getScriptPath()));
+        processBuilder.environment().put("PYTHONIOENCODING", StandardCharsets.UTF_8.name());
+        processBuilder.environment().put("PYTHONUTF8", "1");
         processBuilder.redirectErrorStream(false);
-        Process process = processBuilder.start();
+
+        Process process;
+        try
+        {
+            process = processBuilder.start();
+        }
+        catch (IOException ex)
+        {
+            log.error("Failed to start python process", ex);
+            throw new IllegalStateException(AgriErrorCode.ERR_PYTHON_UNAVAILABLE.getCode(), ex);
+        }
 
         ExecutorService executorService = Executors.newFixedThreadPool(2);
         try
@@ -62,20 +80,20 @@ public class PythonProcessExecutor
             if (!finished)
             {
                 process.destroyForcibly();
-                throw new TimeoutException("Python脚本执行超时");
+                throw new IllegalStateException(AgriErrorCode.ERR_PYTHON_TIMEOUT.getCode());
             }
 
-            String stdout = stdoutFuture.get(5, TimeUnit.SECONDS);
-            String stderr = stderrFuture.get(5, TimeUnit.SECONDS);
+            String stdout = readStream(stdoutFuture, AgriErrorCode.ERR_PYTHON_BAD_RESPONSE.getCode());
+            String stderr = readStream(stderrFuture, AgriErrorCode.ERR_PYTHON_EXECUTION_FAILED.getCode());
             int exitCode = process.exitValue();
             if (exitCode != 0)
             {
-                log.error("Python脚本退出异常，exitCode={}, stderr={}", exitCode, stderr);
-                throw new IllegalStateException("Python脚本执行失败：" + stderr);
+                log.error("Python process exited abnormally, exitCode={}, stderr={}", exitCode, stderr);
+                throw new IllegalStateException(AgriErrorCode.ERR_PYTHON_EXECUTION_FAILED.getCode());
             }
             if (StringUtils.isEmpty(stdout))
             {
-                throw new IllegalStateException("Python脚本未返回结果");
+                throw new IllegalStateException(AgriErrorCode.ERR_PYTHON_BAD_RESPONSE.getCode());
             }
             return stdout;
         }
@@ -89,11 +107,38 @@ public class PythonProcessExecutor
     {
         if (StringUtils.isEmpty(agriPythonProperties.getExecutable()))
         {
-            throw new IllegalStateException("未配置 agri.python.executable");
+            throw new IllegalStateException(AgriErrorCode.ERR_PYTHON_UNAVAILABLE.getCode());
         }
         if (StringUtils.isEmpty(agriPythonProperties.getScriptPath()))
         {
-            throw new IllegalStateException("未配置 agri.python.script-path");
+            throw new IllegalStateException(AgriErrorCode.ERR_PYTHON_UNAVAILABLE.getCode());
+        }
+
+        Path scriptPath = Paths.get(agriPythonProperties.getScriptPath());
+        if (!Files.exists(scriptPath))
+        {
+            throw new IllegalStateException(AgriErrorCode.ERR_PYTHON_SCRIPT_MISSING.getCode());
+        }
+    }
+
+    private String readStream(Future<String> future, String errorCode)
+    {
+        try
+        {
+            return future.get(5, TimeUnit.SECONDS);
+        }
+        catch (InterruptedException ex)
+        {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(errorCode, ex);
+        }
+        catch (ExecutionException ex)
+        {
+            throw new IllegalStateException(errorCode, ex);
+        }
+        catch (TimeoutException ex)
+        {
+            throw new IllegalStateException(errorCode, ex);
         }
     }
 

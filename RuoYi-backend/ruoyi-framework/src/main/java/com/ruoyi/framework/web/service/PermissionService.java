@@ -40,6 +40,17 @@ public class PermissionService
     }
 
     /**
+     * 验证用户是否具备某权限，或属于前台门户用户
+     *
+     * @param permission 权限字符串
+     * @return 结果
+     */
+    public boolean hasPermiOrPortal(String permission)
+    {
+        return hasPermi(permission) || isPortalUser();
+    }
+
+    /**
      * 验证用户是否不具备某权限，与 hasPermi逻辑相反
      *
      * @param permission 权限字符串
@@ -143,6 +154,24 @@ public class PermissionService
             }
         }
         return false;
+    }
+
+    /**
+     * 判断当前登录用户是否属于前台门户用户
+     *
+     * @return 结果
+     */
+    public boolean isPortalUser()
+    {
+        try
+        {
+            LoginUser loginUser = SecurityUtils.getLoginUser();
+            return StringUtils.isNotNull(loginUser) && !hasRole("admin");
+        }
+        catch (Exception ex)
+        {
+            return false;
+        }
     }
 
     /**

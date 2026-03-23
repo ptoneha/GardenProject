@@ -17,6 +17,17 @@ const useUserStore = defineStore(
       roles: [],
       permissions: []
     }),
+    getters: {
+      isAdminRole(state) {
+        return state.roles.some(role => ['admin', 'ROLE_ADMIN'].includes(role))
+      },
+      isPortalRole(state) {
+        return !state.roles.some(role => ['admin', 'ROLE_ADMIN'].includes(role))
+      },
+      homePath() {
+        return this.isPortalRole ? '/portal/dashboard' : '/index'
+      }
+    },
     actions: {
       // 登录
       login(userInfo) {
@@ -76,6 +87,10 @@ const useUserStore = defineStore(
         return new Promise((resolve, reject) => {
           logout(this.token).then(() => {
             this.token = ''
+            this.id = ''
+            this.name = ''
+            this.nickName = ''
+            this.avatar = ''
             this.roles = []
             this.permissions = []
             removeToken()

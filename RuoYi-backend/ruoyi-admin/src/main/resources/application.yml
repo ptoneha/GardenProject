@@ -139,5 +139,5 @@ xss:
 agri:
   python:
     executable: python
-    script-path: scripts/agriculture/mock_optimizer.py
+    script-path: C:/Users/exo32/Desktop/MyGardenProject/RuoYi-backend/ruoyi-admin/scripts/agriculture/mock_optimizer.py
     timeout-seconds: 60

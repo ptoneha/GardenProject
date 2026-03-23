@@ -1,6 +1,5 @@
 import request from '@/utils/request'
 
-// 查询种植优化任务列表
 export function listTask(query) {
   return request({
     url: '/agriculture/task/list',
@@ -9,7 +8,6 @@ export function listTask(query) {
   })
 }
 
-// 查询种植优化任务详细
 export function getTask(taskId) {
   return request({
     url: '/agriculture/task/' + taskId,
@@ -17,28 +15,37 @@ export function getTask(taskId) {
   })
 }
 
-// 新增种植优化任务
 export function addTask(data) {
   return request({
     url: '/agriculture/task',
     method: 'post',
-    data: data
+    data
   })
 }
 
-// 修改种植优化任务
 export function updateTask(data) {
   return request({
     url: '/agriculture/task',
     method: 'put',
-    data: data
+    data
   })
 }
 
-// 删除种植优化任务
 export function delTask(taskId) {
   return request({
     url: '/agriculture/task/' + taskId,
     method: 'delete'
+  })
+}
+
+export function executeTask(taskId, config = {}) {
+  return request({
+    url: '/agriculture/task/execute/' + taskId,
+    method: 'post',
+    headers: {
+      silentError: true,
+      ...(config.headers || {})
+    },
+    ...config
   })
 }

@@ -15,6 +15,8 @@ public class AgriTaskExecuteResult
 
     private String infeasibleReason;
 
+    private String infeasibleReasonDesc;
+
     private Integer resultCount;
 
     public Long getTaskId()
@@ -65,6 +67,16 @@ public class AgriTaskExecuteResult
     public void setInfeasibleReason(String infeasibleReason)
     {
         this.infeasibleReason = infeasibleReason;
+    }
+
+    public String getInfeasibleReasonDesc()
+    {
+        return infeasibleReasonDesc;
+    }
+
+    public void setInfeasibleReasonDesc(String infeasibleReasonDesc)
+    {
+        this.infeasibleReasonDesc = infeasibleReasonDesc;
     }
 
     public Integer getResultCount()

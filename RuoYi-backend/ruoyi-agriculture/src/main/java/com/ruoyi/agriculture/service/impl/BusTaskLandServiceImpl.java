@@ -1,93 +1,158 @@
 package com.ruoyi.agriculture.service.impl;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.ruoyi.agriculture.mapper.BusTaskLandMapper;
+import com.ruoyi.agriculture.domain.BusLand;
+import com.ruoyi.agriculture.domain.BusOptimizationTask;
 import com.ruoyi.agriculture.domain.BusTaskLand;
+import com.ruoyi.agriculture.mapper.BusLandMapper;
+import com.ruoyi.agriculture.mapper.BusOptimizationTaskMapper;
+import com.ruoyi.agriculture.mapper.BusTaskLandMapper;
 import com.ruoyi.agriculture.service.IBusTaskLandService;
+import com.ruoyi.common.utils.SecurityUtils;
 
 /**
  * 任务资源关联Service业务层处理
- * 
- * @author ruoyi
- * @date 2026-03-15
  */
 @Service
-public class BusTaskLandServiceImpl implements IBusTaskLandService 
+public class BusTaskLandServiceImpl implements IBusTaskLandService
 {
     @Autowired
     private BusTaskLandMapper busTaskLandMapper;
 
-    /**
-     * 查询任务资源关联
-     * 
-     * @param taskId 任务资源关联主键
-     * @return 任务资源关联
-     */
+    @Autowired
+    private BusOptimizationTaskMapper busOptimizationTaskMapper;
+
+    @Autowired
+    private BusLandMapper busLandMapper;
+
     @Override
     public BusTaskLand selectBusTaskLandByTaskId(Long taskId)
     {
+        if (!canAccessTask(taskId))
+        {
+            return null;
+        }
         return busTaskLandMapper.selectBusTaskLandByTaskId(taskId);
     }
 
-    /**
-     * 查询任务资源关联列表
-     * 
-     * @param busTaskLand 任务资源关联
-     * @return 任务资源关联
-     */
     @Override
     public List<BusTaskLand> selectBusTaskLandList(BusTaskLand busTaskLand)
     {
+        if (isCurrentAdmin())
+        {
+            return busTaskLandMapper.selectBusTaskLandList(busTaskLand);
+        }
+        if (busTaskLand == null || busTaskLand.getTaskId() == null || !canAccessTask(busTaskLand.getTaskId()))
+        {
+            return Collections.emptyList();
+        }
+        if (busTaskLand.getLandId() != null && !canAccessLand(busTaskLand.getLandId()))
+        {
+            return Collections.emptyList();
+        }
         return busTaskLandMapper.selectBusTaskLandList(busTaskLand);
     }
 
-    /**
-     * 新增任务资源关联
-     * 
-     * @param busTaskLand 任务资源关联
-     * @return 结果
-     */
     @Override
     public int insertBusTaskLand(BusTaskLand busTaskLand)
     {
+        if (!canAccessTask(busTaskLand.getTaskId()) || !canAccessLand(busTaskLand.getLandId()))
+        {
+            return 0;
+        }
         return busTaskLandMapper.insertBusTaskLand(busTaskLand);
     }
 
-    /**
-     * 修改任务资源关联
-     * 
-     * @param busTaskLand 任务资源关联
-     * @return 结果
-     */
     @Override
     public int updateBusTaskLand(BusTaskLand busTaskLand)
     {
+        if (!canAccessTask(busTaskLand.getTaskId()) || !canAccessLand(busTaskLand.getLandId()))
+        {
+            return 0;
+        }
         return busTaskLandMapper.updateBusTaskLand(busTaskLand);
     }
 
-    /**
-     * 批量删除任务资源关联
-     * 
-     * @param taskIds 需要删除的任务资源关联主键
-     * @return 结果
-     */
     @Override
     public int deleteBusTaskLandByTaskIds(Long[] taskIds)
     {
-        return busTaskLandMapper.deleteBusTaskLandByTaskIds(taskIds);
+        int rows = 0;
+        for (Long taskId : taskIds)
+        {
+          rows += deleteBusTaskLandByTaskId(taskId);
+        }
+        return rows;
     }
 
-    /**
-     * 删除任务资源关联信息
-     * 
-     * @param taskId 任务资源关联主键
-     * @return 结果
-     */
     @Override
     public int deleteBusTaskLandByTaskId(Long taskId)
     {
+        if (!canAccessTask(taskId))
+        {
+            return 0;
+        }
         return busTaskLandMapper.deleteBusTaskLandByTaskId(taskId);
+    }
+
+    private boolean canAccessTask(Long taskId)
+    {
+        BusOptimizationTask task = busOptimizationTaskMapper.selectBusOptimizationTaskByTaskId(taskId);
+        if (task == null)
+        {
+            return false;
+        }
+        if (isCurrentAdmin())
+        {
+            return true;
+        }
+        return Objects.equals(resolveCurrentUserId(), task.getOwnerUserId());
+    }
+
+    private boolean canAccessLand(Long landId)
+    {
+        BusLand land = busLandMapper.selectBusLandByLandId(landId);
+        if (land == null)
+        {
+            return false;
+        }
+        if (isCurrentAdmin())
+        {
+            return true;
+        }
+        return Objects.equals(resolveCurrentUsername(), land.getCreateBy());
+    }
+
+    private boolean isCurrentAdmin()
+    {
+        Long userId = resolveCurrentUserId();
+        return userId != null && SecurityUtils.isAdmin(userId);
+    }
+
+    private Long resolveCurrentUserId()
+    {
+        try
+        {
+            return SecurityUtils.getUserId();
+        }
+        catch (Exception ex)
+        {
+            return null;
+        }
+    }
+
+    private String resolveCurrentUsername()
+    {
+        try
+        {
+            return SecurityUtils.getUsername();
+        }
+        catch (Exception ex)
+        {
+            return null;
+        }
     }
 }

@@ -6,8 +6,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.alibaba.fastjson2.JSON;
+import com.ruoyi.agriculture.constant.AgriErrorCode;
 import com.ruoyi.agriculture.domain.BusContainer;
 import com.ruoyi.agriculture.domain.BusCrop;
 import com.ruoyi.agriculture.domain.BusCropConfig;
@@ -35,11 +38,9 @@ import com.ruoyi.agriculture.mapper.BusTaskLandMapper;
 import com.ruoyi.agriculture.service.IBusOptimizationTaskService;
 import com.ruoyi.agriculture.util.PythonProcessExecutor;
 import com.ruoyi.common.utils.DateUtils;
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.StringUtils;
 
-/**
- * 种植优化任务Service业务层处理
- */
 @Service
 public class BusOptimizationTaskServiceImpl implements IBusOptimizationTaskService
 {
@@ -53,7 +54,13 @@ public class BusOptimizationTaskServiceImpl implements IBusOptimizationTaskServi
 
     private static final String TASK_STATUS_FAILED = "3";
 
+    private static final String TASK_STATUS_RUNNING = "4";
+
     private static final BigDecimal MU_TO_SQM = new BigDecimal("666.67");
+
+    private static final BigDecimal ZERO = BigDecimal.ZERO;
+
+    private static final BigDecimal ONE = BigDecimal.ONE;
 
     @Autowired
     private BusOptimizationTaskMapper busOptimizationTaskMapper;
@@ -82,12 +89,14 @@ public class BusOptimizationTaskServiceImpl implements IBusOptimizationTaskServi
     @Override
     public BusOptimizationTask selectBusOptimizationTaskByTaskId(Long taskId)
     {
-        return busOptimizationTaskMapper.selectBusOptimizationTaskByTaskId(taskId);
+        BusOptimizationTask task = busOptimizationTaskMapper.selectBusOptimizationTaskByTaskId(taskId);
+        return canAccessTask(task) ? task : null;
     }
 
     @Override
     public List<BusOptimizationTask> selectBusOptimizationTaskList(BusOptimizationTask busOptimizationTask)
     {
+        applyTaskDataScope(busOptimizationTask);
         return busOptimizationTaskMapper.selectBusOptimizationTaskList(busOptimizationTask);
     }
 
@@ -99,24 +108,41 @@ public class BusOptimizationTaskServiceImpl implements IBusOptimizationTaskServi
         {
             busOptimizationTask.setStatus(TASK_STATUS_PENDING);
         }
+        if (busOptimizationTask.getOwnerUserId() == null)
+        {
+            busOptimizationTask.setOwnerUserId(resolveCurrentUserId());
+        }
         return busOptimizationTaskMapper.insertBusOptimizationTask(busOptimizationTask);
     }
 
     @Override
     public int updateBusOptimizationTask(BusOptimizationTask busOptimizationTask)
     {
+        if (!canAccessTask(busOptimizationTask.getTaskId()))
+        {
+            return 0;
+        }
         return busOptimizationTaskMapper.updateBusOptimizationTask(busOptimizationTask);
     }
 
     @Override
     public int deleteBusOptimizationTaskByTaskIds(Long[] taskIds)
     {
-        return busOptimizationTaskMapper.deleteBusOptimizationTaskByTaskIds(taskIds);
+        int rows = 0;
+        for (Long taskId : taskIds)
+        {
+            rows += deleteBusOptimizationTaskByTaskId(taskId);
+        }
+        return rows;
     }
 
     @Override
     public int deleteBusOptimizationTaskByTaskId(Long taskId)
     {
+        if (!canAccessTask(taskId))
+        {
+            return 0;
+        }
         return busOptimizationTaskMapper.deleteBusOptimizationTaskByTaskId(taskId);
     }
 
@@ -127,29 +153,125 @@ public class BusOptimizationTaskServiceImpl implements IBusOptimizationTaskServi
         BusOptimizationTask task = busOptimizationTaskMapper.selectBusOptimizationTaskByTaskId(taskId);
         if (task == null)
         {
-            return buildExecuteResult(taskId, Integer.valueOf(TASK_STATUS_FAILED), Boolean.FALSE, "任务不存在", null, 0);
+            return buildExecuteResult(taskId, Integer.valueOf(TASK_STATUS_FAILED), Boolean.FALSE, "error",
+                AgriErrorCode.ERR_TASK_NOT_FOUND.getCode(), 0);
+        }
+        if (!canExecuteTask(task))
+        {
+            return buildExecuteResult(taskId, Integer.valueOf(TASK_STATUS_FAILED), Boolean.FALSE, "error",
+                AgriErrorCode.ERR_TASK_FORBIDDEN.getCode(), 0);
+        }
+        if (!lockTaskForExecution(task))
+        {
+            return buildExecuteResult(taskId, Integer.valueOf(TASK_STATUS_FAILED), Boolean.FALSE, "error",
+                AgriErrorCode.ERR_TASK_RUNNING.getCode(), 0);
         }
 
         try
         {
+            validateTaskRules(task);
+
             AgriAlgorithmRequest request = buildAlgorithmRequest(task);
             String inputJson = JSON.toJSONString(request);
-            log.info("开始执行优化任务，taskId={}, input={}", taskId, inputJson);
+            log.info("Start agriculture task execution, taskId={}, input={}", taskId, inputJson);
 
             String outputJson = pythonProcessExecutor.execute(inputJson);
-            log.info("优化任务执行完成，taskId={}, output={}", taskId, outputJson);
+            log.info("Agriculture task execution finished, taskId={}, output={}", taskId, outputJson);
 
-            AgriAlgorithmResponse response = JSON.parseObject(outputJson, AgriAlgorithmResponse.class);
+            AgriAlgorithmResponse response;
+            try
+            {
+                response = JSON.parseObject(outputJson, AgriAlgorithmResponse.class);
+            }
+            catch (Exception ex)
+            {
+                throw new IllegalStateException(AgriErrorCode.ERR_PYTHON_BAD_RESPONSE.getCode(), ex);
+            }
             return handleAlgorithmResponse(taskId, response);
         }
         catch (Exception ex)
         {
-            log.error("执行优化任务失败，taskId={}", taskId, ex);
+            log.error("Agriculture task execution failed, taskId={}", taskId, ex);
             cleanupTaskResults(taskId);
             updateTaskStatus(taskId, TASK_STATUS_FAILED);
-            return buildExecuteResult(taskId, Integer.valueOf(TASK_STATUS_FAILED), Boolean.FALSE,
-                "执行优化任务失败：" + ex.getMessage(), null, 0);
+            return buildExecuteResult(taskId, Integer.valueOf(TASK_STATUS_FAILED), Boolean.FALSE, "error",
+                resolveErrorCode(ex), 0);
         }
+    }
+
+    private void validateTaskRules(BusOptimizationTask task)
+    {
+        BigDecimal minPulseRatio = task.getMinPulseRatio();
+        if (minPulseRatio != null && (minPulseRatio.compareTo(ZERO) < 0 || minPulseRatio.compareTo(ONE) > 0))
+        {
+            throw new IllegalStateException(AgriErrorCode.ERR_INVALID_INPUT.getCode());
+        }
+
+        Set<Long> whitelist = new LinkedHashSet<Long>(parseCropIdList(task.getCropWhitelist()));
+        Set<Long> blacklist = new LinkedHashSet<Long>(parseCropIdList(task.getCropBlacklist()));
+        whitelist.retainAll(blacklist);
+        if (!whitelist.isEmpty())
+        {
+            throw new IllegalStateException(AgriErrorCode.ERR_CONFLICTING_CROP_RULES.getCode());
+        }
+    }
+
+    private boolean canExecuteTask(BusOptimizationTask task)
+    {
+        if (task == null)
+        {
+            return false;
+        }
+        if (task.getOwnerUserId() == null)
+        {
+            return true;
+        }
+
+        Long currentUserId = resolveCurrentUserId();
+        if (currentUserId == null)
+        {
+            return false;
+        }
+        return SecurityUtils.isAdmin(currentUserId) || currentUserId.equals(task.getOwnerUserId());
+    }
+
+    private void applyTaskDataScope(BusOptimizationTask task)
+    {
+        if (task == null || isCurrentAdmin())
+        {
+            return;
+        }
+        task.setOwnerUserId(resolveCurrentUserId());
+    }
+
+    private boolean canAccessTask(Long taskId)
+    {
+        return canAccessTask(busOptimizationTaskMapper.selectBusOptimizationTaskByTaskId(taskId));
+    }
+
+    private boolean canAccessTask(BusOptimizationTask task)
+    {
+        if (task == null)
+        {
+            return false;
+        }
+        if (isCurrentAdmin())
+        {
+            return true;
+        }
+        Long currentUserId = resolveCurrentUserId();
+        return currentUserId != null && currentUserId.equals(task.getOwnerUserId());
+    }
+
+    private boolean lockTaskForExecution(BusOptimizationTask task)
+    {
+        if (TASK_STATUS_RUNNING.equals(task.getStatus()))
+        {
+            return false;
+        }
+        String fromStatus = StringUtils.isEmpty(task.getStatus()) ? TASK_STATUS_PENDING : task.getStatus();
+        int rows = busOptimizationTaskMapper.updateTaskStatusWithLock(task.getTaskId(), fromStatus, TASK_STATUS_RUNNING);
+        return rows > 0;
     }
 
     private AgriAlgorithmRequest buildAlgorithmRequest(BusOptimizationTask task)
@@ -157,7 +279,7 @@ public class BusOptimizationTaskServiceImpl implements IBusOptimizationTaskServi
         List<BusTaskLand> taskLands = busTaskLandMapper.selectBusTaskLandListByTaskId(task.getTaskId());
         if (StringUtils.isEmpty(taskLands))
         {
-            throw new IllegalStateException("任务未关联地块");
+            throw new IllegalStateException(AgriErrorCode.ERR_NO_LANDS.getCode());
         }
 
         List<Long> landIds = taskLands.stream()
@@ -167,7 +289,7 @@ public class BusOptimizationTaskServiceImpl implements IBusOptimizationTaskServi
         List<BusLand> lands = busLandMapper.selectBusLandByLandIds(landIds);
         if (StringUtils.isEmpty(lands))
         {
-            throw new IllegalStateException("未查询到任务关联地块");
+            throw new IllegalStateException(AgriErrorCode.ERR_NO_LANDS.getCode());
         }
 
         Map<Long, BusLand> landMap = lands.stream()
@@ -187,7 +309,7 @@ public class BusOptimizationTaskServiceImpl implements IBusOptimizationTaskServi
             BusLand land = landMap.get(taskLand.getLandId());
             if (land == null)
             {
-                throw new IllegalStateException("存在无效地块关联，landId=" + taskLand.getLandId());
+                throw new IllegalStateException(AgriErrorCode.ERR_NO_LANDS.getCode());
             }
             List<BusContainer> currentContainers = containerMap.get(taskLand.getLandId());
             if (currentContainers == null)
@@ -201,20 +323,25 @@ public class BusOptimizationTaskServiceImpl implements IBusOptimizationTaskServi
         List<BusCrop> crops = busCropMapper.selectBusCropList(cropQuery);
         if (StringUtils.isEmpty(crops))
         {
-            throw new IllegalStateException("未查询到作物基础数据");
+            throw new IllegalStateException(AgriErrorCode.ERR_NO_CROPS.getCode());
         }
 
         BusCropConfig cropConfigQuery = new BusCropConfig();
         List<BusCropConfig> cropConfigs = busCropConfigMapper.selectBusCropConfigList(cropConfigQuery);
         if (StringUtils.isEmpty(cropConfigs))
         {
-            throw new IllegalStateException("未查询到作物配置数据");
+            throw new IllegalStateException(AgriErrorCode.ERR_NO_CROP_CONFIGS.getCode());
         }
 
         AgriAlgorithmRequest request = new AgriAlgorithmRequest();
         request.setTaskId(task.getTaskId());
         request.setMode(task.getMode());
-        request.setBudget(task.getTotalBudget() == null ? BigDecimal.ZERO : task.getTotalBudget());
+        request.setBudget(task.getTotalBudget() == null ? ZERO : task.getTotalBudget());
+        request.setTaskSeason(task.getTaskSeason());
+        request.setMinPulseRatio(task.getMinPulseRatio() == null ? ZERO : task.getMinPulseRatio());
+        request.setOwnerUserId(task.getOwnerUserId());
+        request.setCropWhitelist(parseCropIdList(task.getCropWhitelist()));
+        request.setCropBlacklist(parseCropIdList(task.getCropBlacklist()));
         request.setLands(buildLandItems(taskLandContexts));
         request.setContainers(buildContainerItems(taskLandContexts));
         request.setCrops(buildCropItems(crops));
@@ -279,6 +406,8 @@ public class BusOptimizationTaskServiceImpl implements IBusOptimizationTaskServi
             AgriAlgorithmRequest.CropConfigItem item = new AgriAlgorithmRequest.CropConfigItem();
             item.setCropId(cropConfig.getCropId());
             item.setLandType(cropConfig.getLandType());
+            item.setStartMonth(cropConfig.getStartMonth());
+            item.setEndMonth(cropConfig.getEndMonth());
             item.setYieldVal(cropConfig.getYieldVal());
             item.setCostVal(cropConfig.getCostVal());
             item.setMarketPrice(cropConfig.getMarketPrice());
@@ -294,7 +423,7 @@ public class BusOptimizationTaskServiceImpl implements IBusOptimizationTaskServi
     {
         if (response == null)
         {
-            throw new IllegalStateException("Python返回结果为空");
+            throw new IllegalStateException(AgriErrorCode.ERR_PYTHON_BAD_RESPONSE.getCode());
         }
 
         Integer status = response.getStatus();
@@ -303,7 +432,7 @@ public class BusOptimizationTaskServiceImpl implements IBusOptimizationTaskServi
             replaceTaskResults(taskId, response.getResults());
             updateTaskStatus(taskId, TASK_STATUS_SUCCESS);
             return buildExecuteResult(taskId, Integer.valueOf(TASK_STATUS_SUCCESS), Boolean.TRUE,
-                defaultMessage(response.getMessage(), "优化任务执行成功"),
+                defaultMessage(response.getMessage(), "ok"),
                 response.getInfeasibleReason(),
                 response.getResults() == null ? 0 : response.getResults().size());
         }
@@ -312,16 +441,15 @@ public class BusOptimizationTaskServiceImpl implements IBusOptimizationTaskServi
         if (Integer.valueOf(2).equals(status))
         {
             updateTaskStatus(taskId, TASK_STATUS_INFEASIBLE);
-            // TODO 持久化 infeasibleReason，当前任务表缺少对应字段。
             return buildExecuteResult(taskId, Integer.valueOf(TASK_STATUS_INFEASIBLE), Boolean.FALSE,
-                defaultMessage(response.getMessage(), "当前任务无可行解"),
+                defaultMessage(response.getMessage(), "infeasible"),
                 response.getInfeasibleReason(),
                 0);
         }
 
         updateTaskStatus(taskId, TASK_STATUS_FAILED);
         return buildExecuteResult(taskId, Integer.valueOf(TASK_STATUS_FAILED), Boolean.FALSE,
-            defaultMessage(response.getMessage(), "优化任务执行失败"),
+            defaultMessage(response.getMessage(), "error"),
             response.getInfeasibleReason(),
             0);
     }
@@ -368,12 +496,16 @@ public class BusOptimizationTaskServiceImpl implements IBusOptimizationTaskServi
     private AgriTaskExecuteResult buildExecuteResult(Long taskId, Integer status, Boolean success,
         String message, String infeasibleReason, Integer resultCount)
     {
+        String normalizedReasonCode = AgriErrorCode.normalizeCode(infeasibleReason);
+        String reasonDescription = AgriErrorCode.resolveDescription(normalizedReasonCode);
+
         AgriTaskExecuteResult result = new AgriTaskExecuteResult();
         result.setTaskId(taskId);
         result.setStatus(status);
         result.setSuccess(success);
-        result.setMessage(message);
-        result.setInfeasibleReason(infeasibleReason);
+        result.setMessage(resolveDisplayMessage(message, reasonDescription));
+        result.setInfeasibleReason(normalizedReasonCode);
+        result.setInfeasibleReasonDesc(reasonDescription);
         result.setResultCount(resultCount);
         return result;
     }
@@ -386,7 +518,7 @@ public class BusOptimizationTaskServiceImpl implements IBusOptimizationTaskServi
         }
         if (land.getInputValue() == null)
         {
-            throw new IllegalStateException("地块面积缺失，landId=" + land.getLandId());
+            throw new IllegalStateException(AgriErrorCode.ERR_INVALID_INPUT.getCode());
         }
         if ("mu".equalsIgnoreCase(land.getUnit()))
         {
@@ -395,9 +527,85 @@ public class BusOptimizationTaskServiceImpl implements IBusOptimizationTaskServi
         return land.getInputValue().setScale(4, RoundingMode.HALF_UP);
     }
 
+    private List<Long> parseCropIdList(String raw)
+    {
+        if (StringUtils.isEmpty(raw))
+        {
+            return Collections.emptyList();
+        }
+
+        List<Long> ids = new ArrayList<Long>();
+        String[] parts = raw.split(",");
+        for (String part : parts)
+        {
+            String value = part == null ? null : part.trim();
+            if (StringUtils.isEmpty(value))
+            {
+                continue;
+            }
+            try
+            {
+                ids.add(Long.valueOf(value));
+            }
+            catch (NumberFormatException ex)
+            {
+                throw new IllegalStateException(AgriErrorCode.ERR_INVALID_INPUT.getCode(), ex);
+            }
+        }
+        return ids;
+    }
+
+    private Long resolveCurrentUserId()
+    {
+        try
+        {
+            return SecurityUtils.getUserId();
+        }
+        catch (Exception ex)
+        {
+            log.debug("No authenticated user found when resolving task owner", ex);
+            return null;
+        }
+    }
+
+    private boolean isCurrentAdmin()
+    {
+        Long userId = resolveCurrentUserId();
+        return userId != null && SecurityUtils.isAdmin(userId);
+    }
+
     private String defaultMessage(String message, String defaultMessage)
     {
         return StringUtils.isEmpty(message) ? defaultMessage : message;
+    }
+
+    private String resolveErrorCode(Exception ex)
+    {
+        if (ex == null)
+        {
+            return AgriErrorCode.ERR_INTERNAL.getCode();
+        }
+
+        String message = ex.getMessage();
+        if (StringUtils.isNotEmpty(message))
+        {
+            return AgriErrorCode.normalizeCode(message);
+        }
+        return AgriErrorCode.ERR_INTERNAL.getCode();
+    }
+
+    private String resolveDisplayMessage(String message, String reasonDescription)
+    {
+        if (StringUtils.isNotEmpty(reasonDescription))
+        {
+            if (StringUtils.isEmpty(message)
+                || "infeasible".equalsIgnoreCase(message)
+                || "error".equalsIgnoreCase(message))
+            {
+                return reasonDescription;
+            }
+        }
+        return message;
     }
 
     private static class TaskLandContext
